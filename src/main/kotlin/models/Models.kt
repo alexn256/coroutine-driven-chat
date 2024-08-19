@@ -6,6 +6,10 @@ enum class Status {
     ONLINE, OFFLINE
 }
 
+data class Text (
+    val text: String
+)
+
 data class User(
     val id: String,
     val username: String,
