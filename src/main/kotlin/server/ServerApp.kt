@@ -1,7 +1,9 @@
 package server
 
-fun main() {
-    val port = 9000
-    val server = Server(port)
+import kotlinx.coroutines.runBlocking
+
+
+fun main() = runBlocking {
+    val server = Server(8000)
     server.start()
 }
