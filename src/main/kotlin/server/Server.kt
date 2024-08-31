@@ -8,36 +8,51 @@ import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
 
-data class Client(val socket: Socket, val name: String)
 
-class Server(private val port: Int) {
+class Server(private val port: Int,  private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO)) {
 
     private val socket: ServerSocket = ServerSocket(port)
     private val clientSockets:MutableMap<String, Socket> = mutableMapOf()
 
     suspend fun start() {
         println("The server started on port $port.")
-        val job = CoroutineScope(Dispatchers.IO).launch(CoroutineName("receiver")) {
+        val job = scope.launch(CoroutineName("receiver")) {
             listen()
         }
         job.join()
     }
 
-    suspend fun receive() {
-
+    private suspend fun receive() {
+        if (clientSockets.isNotEmpty()) {
+            clientSockets.forEach { (hostname, socket) ->
+                val reader = socket.getInputStream().bufferedReader()
+                scope.launch  {
+                    val message = reader.readLine()
+                    println("$hostname: $message")  // log message to console
+                }
+            }
+        }
     }
 
     suspend fun send(message: Message<Text>) {
-
+        //todo: send the message to particular user (Socket).
     }
 
     suspend fun stop() {
+        try {
+            scope.launch {
+                socket.close()
+            }
+            println("The server is stopping")
+        } catch (e: IOException) {
 
+        }
     }
 
     private suspend fun listen() {
         while (true) {
             accept()
+            receive()
         }
     }
 
@@ -56,7 +71,7 @@ class Server(private val port: Int) {
 
     suspend fun close(clientSocket: Socket) {
         try {
-            withContext(Dispatchers.IO) {
+            scope.launch() {
                 clientSocket.close()
             }
             println("Client connected: ${clientSocket.inetAddress.hostAddress}")
