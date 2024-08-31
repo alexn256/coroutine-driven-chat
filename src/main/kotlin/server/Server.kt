@@ -41,7 +41,7 @@ class Server(private val port: Int,  private val scope: CoroutineScope = Corouti
     suspend fun stop() {
         try {
             withContext(Dispatchers.IO) {
-                clientSockets.values.forEach { it.close() }
+                clientSockets.values.forEach { close(it) }
                 socket.close()
             }
             println("The server is stopping")
@@ -70,12 +70,12 @@ class Server(private val port: Int,  private val scope: CoroutineScope = Corouti
         }
     }
 
-    suspend fun close(clientSocket: Socket) {
+    private suspend fun close(clientSocket: Socket) {
         try {
-            scope.launch() {
+            withContext(Dispatchers.IO) {
                 clientSocket.close()
             }
-            println("Client connected: ${clientSocket.inetAddress.hostAddress}")
+            println("Client disconnected: ${clientSocket.inetAddress.hostAddress}")
         } catch (e: IOException) {
             println("Disconnection failed: Unable to close a connection with the client. ${e.message}")
         }
