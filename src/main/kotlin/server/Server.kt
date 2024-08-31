@@ -40,12 +40,13 @@ class Server(private val port: Int,  private val scope: CoroutineScope = Corouti
 
     suspend fun stop() {
         try {
-            scope.launch {
+            withContext(Dispatchers.IO) {
+                clientSockets.values.forEach { it.close() }
                 socket.close()
             }
             println("The server is stopping")
         } catch (e: IOException) {
-
+            println("Error stopping the server: ${e.message}")
         }
     }
 
